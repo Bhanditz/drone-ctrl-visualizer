@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Gyro Demo</title>
+        <style media="screen">
+            #videoElement, #canvas {
+                position: absolute;
+                top:      0px;
+                left:     0px;
+                width:    100%;
+                height:   100%;
+            }
+            #info {
+                position: absolute;
+                top:      1em;
+                left:     1em;
+                color:    #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <video autoplay="true" id="videoElement"></video>
+        <canvas id="canvas"></canvas>
+        <div id="info">
+            alpha:<span id="alpha"></span><br>
+            beta:<span id="beta"></span><br>
+            gamma:<span id="gamma"></span><br>
+        </div>
+
+        <script src="/node_modules/angular/angular.min.js" charset="utf-8"></script>
+        <script src="/node_modules/jquery/dist/jquery.min.js" charset="utf-8"></script>
+        <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js" charset="utf-8"></script>
+        <script src="/node_modules/three/build/three.js" charset="utf-8"></script>
+        <script src="drone.js" charset="utf-8"></script>
+        <script src="app.js" charset="utf-8"></script>
+        <script type="text/javascript">
+/*            var video = document.getElementById("videoElement");
+         
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+             
+            if (navigator.getUserMedia) {      
+                navigator.getUserMedia({ video: true }, handleVideo, videoError);
+            }
+             
+            function handleVideo(stream) {
+                video.src = window.URL.createObjectURL(stream);
+            }
+             
+            function videoError(e) {
+                var msg = e.name && (e.name + e.message) || e.toString();
+                console.error(msg, e);
+                alert(msg);
+                // do something
+        }*/
+        </script>
+    </body>
+</html>
