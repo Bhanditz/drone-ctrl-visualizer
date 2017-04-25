@@ -21,7 +21,28 @@ var renderer, camera, scene, drone;
 
 var drone, ground, axisHelper;
 
-var socket = new io();
+var controller = new (function(){
+	this.lastEvent = null;
+	this.updateEvent = function( event ) {
+		this.lastEvent = event;
+	}
+	this.moveAngle = {
+		forwards : 10
+	};
+	this.refreshFunc = function() {
+		if (!this.lastEvent) return;
+		if (this.lastEvent.beta < 90-this.moveAngle.forwards && this.lastEvent.beta > 0) {
+			console.log( "etukeno!" );
+			if (!!socket) this.moveLongitudinalFunc(1);
+		} else if (this.lastEvent.beta > 90+this.moveAngle.forwards && this.lastEvent.beta < 180) {
+			console.log( "takakeno!" );
+			if (!!socket) this.moveLongitudinalFunc(-1);
+		}
+	};
+	this.moveLongitudinalFunc = function( longitudinal ) {
+		socket.emit( "ctrl", JSON.stringify({ longitudinal: longitudinal, orientation: { alpha: this.lastEvent.alpha, beta: this.lastEvent.beta, gamma: this.lastEvent.gamma } }) );
+	}
+})();
 
 function makeSkybox( src ) {
 	var geometry = new THREE.SphereGeometry( 500, 16, 8 );
@@ -94,8 +115,17 @@ function init () {
 //            drone.setRawData( event.alpha, event.beta, event.gamma );
 //            setObjectQuaternion( drone.obj.quaternion, event.alpha * 0.017453292519943295, event.beta * 0.017453292519943295, event.gamma * 0.017453292519943295 );
             setObjectQuaternion( camera.quaternion, event.alpha * 0.017453292519943295, event.beta * 0.017453292519943295, event.gamma * 0.017453292519943295 );
+			controller.updateEvent( event );
         }, true);
     } else console.error(new Error("window.DeviceOrientationEvent not supported"));
+
+
+	window.addEventListener( "keydown", function ( event ) {
+		switch ( event.which ) {
+			case 38: return controller.moveLongitudinalFunc(  1 );
+			case 40: return controller.moveLongitudinalFunc( -1 );
+		};
+	}, true);
 
 	window.addEventListener( 'resize', function() {
 		windowHalfX = window.innerWidth / 2;
@@ -111,6 +141,7 @@ function init () {
 
 
 function loop() {
+    controller.refreshFunc();
 
     drone.update();
     camera.position.copy( drone.obj.position );
