@@ -40,6 +40,7 @@ var controller = new (function(){
 		}
 	};
 	this.moveLongitudinalFunc = function( longitudinal ) {
+		if (!this.lastEvent) return;
 		socket.emit( "ctrl", JSON.stringify({ longitudinal: longitudinal, orientation: { alpha: this.lastEvent.alpha, beta: this.lastEvent.beta, gamma: this.lastEvent.gamma } }) );
 	}
 })();
@@ -109,9 +110,6 @@ function init () {
     //get orientation info
     if (window.DeviceOrientationEvent) {
         window.addEventListener( "deviceorientation", function ( event ) {
-        	document.getElementById("alpha").innerHTML = event.alpha;
-        	document.getElementById("beta").innerHTML  = event.beta;
-        	document.getElementById("gamma").innerHTML = event.gamma;
 //            drone.setRawData( event.alpha, event.beta, event.gamma );
 //            setObjectQuaternion( drone.obj.quaternion, event.alpha * 0.017453292519943295, event.beta * 0.017453292519943295, event.gamma * 0.017453292519943295 );
             setObjectQuaternion( camera.quaternion, event.alpha * 0.017453292519943295, event.beta * 0.017453292519943295, event.gamma * 0.017453292519943295 );

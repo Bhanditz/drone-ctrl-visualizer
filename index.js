@@ -6,12 +6,16 @@ var io      = require('socket.io')( http );
 app.use(express.static('./public/'))
 
 function Sensors() {
-	this.orientation = null;
+	this.orientation = {
+			alpha :  0,
+			beta  : 90,
+			gamma :  0
+	};
 	this.height = null;
 	this.pos = { x: 0, z: 0 }
 
 	this.moveFactor = {
-		forwards : 0.01
+		forwards : 0.05
 	}
 }
 Sensors.prototype.getData = function() {
@@ -22,7 +26,7 @@ Sensors.prototype.move = function( forwards ) {
 	if (!!this.orientation) {
 		this.pos.x += Math.cos( this.orientation.alpha / 180 * Math.PI ) * forwards * this.moveFactor.forwards;
 
-		this.pos.z += Math.sin( this.orientation.alpha / 180 * Math.PI ) * forwards * this.moveFactor.forwards;
+		this.pos.z -= Math.sin( this.orientation.alpha / 180 * Math.PI ) * forwards * this.moveFactor.forwards;
 	}
 	console.log( this.pos );
 }
@@ -46,9 +50,9 @@ io.on( 'connection', function( socket ) {
 		console.log('user disconnected');
 	});
 
-	socket.on( 'ping', function( msg ) {
-		console.log('user ping\'d', arguments);
-		socker.emit( 'pong', msg );
+	socket.on( "pling", function( msg ) {
+		console.log('user pling\'d', arguments);
+		socket.emit( 'plong', msg );
 	});
 
 	socket.on( 'ctrl', function( json ) {
@@ -65,11 +69,9 @@ http.listen(3000, function () {
 	console.log('Controller + visualizer app listening on port 3000!')
 
 	setInterval(function() {
-		sensors.orientation = {
-			alpha : Math.random() - .5,
-			beta  : Math.random() - .5 + 90,
-			gamma : Math.random() - .5
-		};
+		sensors.orientation.alpha += Math.random() - .5;
+		sensors.orientation.beta  += Math.random() - .5;
+		sensors.orientation.gamma += Math.random() - .5;
 		sensors.height = (1+Math.cos( Date.now() / 1000 - Math.PI/2) );
 	}, 10);
 

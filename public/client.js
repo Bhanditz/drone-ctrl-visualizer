@@ -2,13 +2,16 @@
 var socket = new io( "http://localhost:3000" );
 $(document).ready( function(){
     console.info( "Ready!" );
-    setInterval( function(){
-        console.info(
-            socket.emit( 'ping', { msg: Date.now() }, function() {
-                console.info( arguments );
-            })
-        );
-    }, 1000)
+
+    function doping() {
+        var msg = Array(8).fill(0).map(function(){ return parseInt(Math.random()*16).toString( 16 ).toUpperCase() }).join("");
+        socket.emit( 'pling', [ msg, Date.now() ] );
+    }
+    socket.on( "plong", function( args ) {
+        console.info("Plong", args[0], (Date.now()-args[1])+"ms");
+        setTimeout(doping, 10000);
+    })
+    doping();
 
     socket.on( 'connect', function() {
         console.info( "Connected!" );
@@ -23,5 +26,9 @@ $(document).ready( function(){
         drone.orientation = data.orientation;
         drone.pos.x = data.pos.x;
         drone.pos.z = data.pos.z;
+
+    	document.getElementById("alpha").innerHTML = data.orientation.alpha;
+    	document.getElementById("beta").innerHTML  = data.orientation.beta;
+    	document.getElementById("gamma").innerHTML = data.orientation.gamma;
     })
 })
