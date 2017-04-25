@@ -11,7 +11,7 @@
     "licence": "MIT",
     "repository": {
         "type": "git",
-        "https://github.com/leonarven/drone-ctrl-visualizer.git"
+        "url": "https://github.com/leonarven/drone-ctrl-visualizer.git"
     },
     "dependencies": {
         "angular": "^1.6.4",
