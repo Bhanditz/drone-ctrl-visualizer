@@ -28,13 +28,30 @@
             gamma:<span id="gamma"></span><br>
         </div>
 
-        <script src="/node_modules/angular/angular.min.js" charset="utf-8"></script>
-        <script src="/node_modules/jquery/dist/jquery.min.js" charset="utf-8"></script>
-        <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js" charset="utf-8"></script>
-        <script src="/node_modules/three/build/three.js" charset="utf-8"></script>
-        <script src="drone.js" charset="utf-8"></script>
-        <script src="app.js" charset="utf-8"></script>
+        <script src="/node_modules/angular/angular.min.js"></script>
+        <script src="/node_modules/jquery/dist/jquery.min.js"></script>
+        <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="/node_modules/three/build/three.js"></script>
+        <script src="/node_modules/socket.io-client/dist/socket.io.min.js"></script>
+        <script src="drone.js"></script>
+        <script src="app.js"></script>
         <script type="text/javascript">
+
+
+            var socket = new io( "http://localhost:3000" );
+            $(document).ready(function(){
+                console.info( "Ready!" );
+                setInterval(function(){
+                    console.info( socket.emit('ping', Date.now().toString()) );
+                }, 1000)
+
+                socket.on("sensors", function(data) {
+                    drone.pos.y = data.height;
+                    drone.orientation = data.orientation;
+                    console.debug( data );
+                })
+            })
+
 /*            var video = document.getElementById("videoElement");
          
             navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;

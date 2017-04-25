@@ -3,6 +3,8 @@ function Drone() {
     this.$beta  = null;
     this.$gamma = null;
 
+    this.orientation = null;
+
     this.euler = new THREE.Euler( 0, 0, 0, 'ZXY' );
 
     this.pos = new THREE.Vector3( 0, 0, 0 );
@@ -18,18 +20,11 @@ function Drone() {
     this.obj.add( axisHelper );
 }
 
-
-Drone.prototype.setRawData = function (alpha, beta, gamma) {
-    this.$alpha = alpha;
-    this.$beta  = beta;
-    this.$gamma = gamma;
-    this.euler.set( (this.$alpha) / 180 * Math.PI
-                  , (this.$beta)  / 180 * Math.PI
-                  , (this.$gamma) / 180 * Math.PI, 'ZXY');
-}
-
 Drone.prototype.update = function () {
     this.obj.position.set( this.pos.x, this.pos.y + 0.05, this.pos.z );
+
+    if (!!this.orientation)
+        setObjectQuaternion( this.obj.quaternion, this.orientation.alpha * 0.017453292519943295, this.orientation.beta * 0.017453292519943295, this.orientation.gamma * 0.017453292519943295 );
 
     return;
 /*    var Rz = (this.$alpha) / 180 * Math.PI;

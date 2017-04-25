@@ -19,7 +19,9 @@ var windowHalfY = window.innerHeight / 2;
 
 var renderer, camera, scene, drone;
 
-var drone, ground;
+var drone, ground, axisHelper;
+
+var socket = new io();
 
 function makeSkybox( src ) {
 	var geometry = new THREE.SphereGeometry( 500, 16, 8 );
@@ -66,10 +68,13 @@ function init () {
 
     scene = new THREE.Scene();
 	ground = makeGround( 11, 11 );
+    axisHelper = new THREE.AxisHelper( 10 ); // X = Red, Y = Green, Z = Blue
+    axisHelper.material.linewidth = 5;
     scene.add(camera);
     scene.add( drone.obj );
     scene.add( makeSkybox( 'skybox/130980896.jpg' ) );
     scene.add( ground );
+    scene.add( axisHelper );
 
 
     renderer = new THREE.WebGLRenderer({
@@ -106,9 +111,8 @@ function init () {
 
 
 function loop() {
-	drone.pos.y = (1+Math.cos( (Date.now()-window.performance.timing.domComplete) / 1000 - Math.PI/2) )
-    drone.update();
 
+    drone.update();
     camera.position.copy( drone.obj.position );
     camera.translateZ( camera.constRadius );
 
