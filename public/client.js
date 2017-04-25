@@ -14,7 +14,8 @@ $(document).ready( function(){
     doping();
 
     socket.on( 'connect', function() {
-        console.info( "Connected!" );
+        console.info( "Connected as client "+ socket.id +"!" );
+    	document.getElementById("info-client-id").innerHTML = socket.id;
     });
 
     socket.on( 'disconnect', function() {
@@ -27,8 +28,8 @@ $(document).ready( function(){
         drone.pos.x = data.pos.x;
         drone.pos.z = data.pos.z;
 
-    	document.getElementById("alpha").innerHTML = data.orientation.alpha;
-    	document.getElementById("beta").innerHTML  = data.orientation.beta;
-    	document.getElementById("gamma").innerHTML = data.orientation.gamma;
+    	document.getElementById("info-alpha").innerHTML = data.orientation.alpha;
+        document.getElementById("info-beta").innerHTML  = data.orientation.beta;
+    	document.getElementById("info-gamma").innerHTML = data.orientation.gamma;
     })
 })

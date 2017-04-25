@@ -16,17 +16,20 @@
                 top:      1em;
                 left:     1em;
                 color:    #fff;
+                margin:   0px;
+                font-family: monospace;
             }
         </style>
     </head>
     <body>
         <video autoplay="true" id="videoElement"></video>
         <canvas id="canvas"></canvas>
-        <div id="info">
-            alpha:<span id="alpha"></span><br>
-            beta:<span id="beta"></span><br>
-            gamma:<span id="gamma"></span><br>
-        </div>
+        <pre id="info">
+Client id : <span id="info-client-id"></span>
+alpha     : <span id="info-alpha"></span>
+beta      : <span id="info-beta"></span>
+gamma     : <span id="info-gamma"></span>
+        </pre>
 
         <script src="/node_modules/angular/angular.min.js"></script>
         <script src="/node_modules/jquery/dist/jquery.min.js"></script>

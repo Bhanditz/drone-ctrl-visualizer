@@ -38,20 +38,15 @@ app.get("/sensors", function( req, res ) {
 	res.json(sensors);
 });
 
-
 io.on( 'connection', function( socket ) {
-	console.log('a user connected');
-
-	setInterval( function() {
-		socket.emit("sensors", sensors.getData() );
-	}, 10);
+	console.log('a user '+ socket.id +' connected');
 
 	socket.on( 'disconnect', function() {
-		console.log('user disconnected');
+		console.log('user '+ socket.id +' disconnected');
 	});
 
 	socket.on( "pling", function( msg ) {
-		console.log('user pling\'d', arguments);
+		console.log('user '+ socket.id +' pling\'d', arguments);
 		socket.emit( 'plong', msg );
 	});
 
@@ -60,10 +55,17 @@ io.on( 'connection', function( socket ) {
 		if (!!json.longitudinal)  {
 			sensors.move(json.longitudinal);
 		}
-		console.info("ctrl", arguments)
+		console.info("ctrl from user "+ socket.id, arguments)
 	});
 });
 
+function ready() {
+	ready = function(){};
+
+	setInterval( function() {
+		io.emit("sensors", sensors.getData() );
+	}, 10);
+}
 
 http.listen(3000, function () {
 	console.log('Controller + visualizer app listening on port 3000!')
@@ -75,4 +77,5 @@ http.listen(3000, function () {
 		sensors.height = (1+Math.cos( Date.now() / 1000 - Math.PI/2) );
 	}, 10);
 
+	ready();
 })
