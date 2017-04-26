@@ -1,42 +1,43 @@
+var fs = require('fs');
 var express = require('express');
 var app     = express();
-var http    = require('http').Server( app );
-var io      = require('socket.io')( http );
+var https   = require('https');
+var Sensors = require('./sensors.js');
+var io      = require('socket.io');
+//var http    = require('http').Server( app );
 
-app.use(express.static('./public/'))
 
-function Sensors() {
-	this.orientation = {
-			alpha :  0,
-			beta  : 90,
-			gamma :  0
-	};
-	this.height = null;
-	this.pos = { x: 0, z: 0 }
-
-	this.moveFactor = {
-		forwards : 0.05
-	}
-}
-Sensors.prototype.getData = function() {
-	return { orientation : this.orientation, height : this.height, pos : this.pos };
-}
-Sensors.prototype.move = function( forwards ) {
-	console.log(forwards);
-	if (!!this.orientation) {
-		this.pos.x += Math.cos( this.orientation.alpha / 180 * Math.PI ) * forwards * this.moveFactor.forwards;
-
-		this.pos.z -= Math.sin( this.orientation.alpha / 180 * Math.PI ) * forwards * this.moveFactor.forwards;
-	}
-	console.log( this.pos );
-}
-
+var httpsOptions = {
+	key               : fs.readFileSync("./server.key"),
+	cert              : fs.readFileSync("./server.crt"),
+	requestCert       : true,
+	rejetUnauthorized : false
+};
 
 var sensors = new Sensors();
 
-app.get("/sensors", function( req, res ) {
-	res.json(sensors);
+var server = https.createServer(httpsOptions, app).listen(1337, function () {
+	console.log('Controller + visualizer app listening on port 1337!')
+
+	setInterval(function() {
+		sensors.orientation.alpha += Math.random() - .5;
+		sensors.orientation.beta  += Math.random() - .5;
+		sensors.orientation.gamma += Math.random() - .5;
+		sensors.height = (1+Math.cos( Date.now() / 1000 - Math.PI/2) );
+	}, 10);
+
+	ready();
 });
+io = io.listen( server );
+
+
+
+app.use(express.static('./public/'));
+app.get("/sensors", function( req, res ) {
+	res.json(sensors.getData());
+});
+
+
 
 io.on( 'connection', function( socket ) {
 	console.log('a user '+ socket.id +' connected');
@@ -66,16 +67,3 @@ function ready() {
 		io.emit("sensors", sensors.getData() );
 	}, 10);
 }
-
-http.listen(3000, function () {
-	console.log('Controller + visualizer app listening on port 3000!')
-
-	setInterval(function() {
-		sensors.orientation.alpha += Math.random() - .5;
-		sensors.orientation.beta  += Math.random() - .5;
-		sensors.orientation.gamma += Math.random() - .5;
-		sensors.height = (1+Math.cos( Date.now() / 1000 - Math.PI/2) );
-	}, 10);
-
-	ready();
-})

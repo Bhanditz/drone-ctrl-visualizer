@@ -1,5 +1,5 @@
 
-var socket = new io( "http://localhost:3000" );
+var socket = new io( "https://localhost:1337", { secure: true } );
 $(document).ready( function(){
     console.info( "Ready!" );
 
