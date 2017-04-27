@@ -4,8 +4,7 @@
   "description": "Visualizer and controller for drone-project",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "./node_modules/nodemon/bin/nodemon.js ./index.js"
   },
   "author": "Miro Nieminen",
   "licence": "MIT",
