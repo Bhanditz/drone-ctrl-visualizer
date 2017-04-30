@@ -16,7 +16,7 @@ var httpsOptions = {
 
 var sensors = new Sensors();
 
-var server = https.createServer(httpsOptions, app).listen(1337, function () {
+var httpsServer = https.createServer(httpsOptions, app).listen(1337, function () {
 	console.log('Controller + visualizer app listening on port 1337!')
 
 	setInterval(function() {
@@ -28,7 +28,9 @@ var server = https.createServer(httpsOptions, app).listen(1337, function () {
 
 	ready();
 });
-io = io.listen( server );
+io = io.listen( httpsServer );
+
+//var httpServer = express.createServer().get('*', (req, res)=>{ res.redirect("https://localhost:1337"+req.url); }).listen(1337);
 
 
 

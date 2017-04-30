@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Gyro Demo</title>
+        <style media="screen">
+            #videoElement, #canvas {
+                position: absolute;
+                top:      0px;
+                left:     0px;
+                width:    100%;
+                height:   100%;
+            }
+            #info {
+                position: absolute;
+                top:      1em;
+                left:     1em;
+                color:    #fff;
+                margin:   0px;
+                font-family: monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <video autoplay="true" id="videoElement"></video>
+        <canvas id="canvas"></canvas>
+        <pre id="info">
+Pos : <span id="info-drone-pos"></span>
+        </pre>
+
+        <script src="/node_modules/angular/angular.min.js"></script>
+        <script src="/node_modules/jquery/dist/jquery.min.js"></script>
+        <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="/node_modules/three/build/three.js"></script>
+        <script src="/node_modules/socket.io-client/dist/socket.io.min.js"></script>
+        <script src="/node_modules/cannon/build/cannon.min.js"></script>
+        <script src="drone.js"></script>
+
+        </script>
+        <script type="text/javascript">
+
+
+            function Drone() {
+
+				this.geometry = new THREE.BoxBufferGeometry( 1, .1, 1 );
+				this.material = new THREE.MeshBasicMaterial( { color: 0xff00ff } );
+
+				this.obj = new THREE.Mesh( this.geometry, this.material );
+                this.obj.add(new THREE.LineSegments( new THREE.EdgesGeometry( this.geometry )
+            	       , new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 1 }) ));
+
+                this.accR = { X: 0, Z: 0, Y: 0 }
+
+                this.forceGroup = new THREE.Group();
+                this.rotorForces = {
+                    fl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0.5, 0, 0.5), 1, 0xff0000 ), // front left
+                    fr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0, 0.5), 1, 0x0000ff ), // front right
+                    rl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0.5, 0,-0.5), 1, 0x8888ff ), // rear left
+                    rr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0,-0.5), 1, 0xff8888 )  // rear right
+
+//                    fl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0,   0), 1, 0xff8888 ), // front left
+//                    fr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(   0, 0, 0.5), 1, 0x8888ff ), // front right
+//                    rl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(   0, 0,-0.5), 1, 0x0000ff ), // rear left
+//                    rr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0.5, 0,   0), 1, 0xff0000 )  // rear right
+                }
+                this.obj.add(
+                    this.forceGroup.add(
+                        this.rotorForces.fl, this.rotorForces.fr, this.rotorForces.rl, this.rotorForces.rr ) );
+            }
+            Drone.prototype.refresh = function() {
+                this.rotorForces.fl.setLength( this.rotorForces.fl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                this.rotorForces.fr.setLength( this.rotorForces.fr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                this.rotorForces.rl.setLength( this.rotorForces.rl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                this.rotorForces.rr.setLength( this.rotorForces.rr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+
+                var X_flrr = this.rotorForces.rr.line.scale.y - this.rotorForces.fl.line.scale.y;
+                var Z_frrl = this.rotorForces.rl.line.scale.y - this.rotorForces.fr.line.scale.y;
+
+                this.accR.X += Z_frrl / 100;
+                this.accR.Z += X_flrr / 100;
+
+                this.obj.rotateX( this.accR.X );
+                this.obj.rotateZ( this.accR.Z );
+
+                var thrustF = this.rotorForces.fl.line.scale.y + this.rotorForces.fr.line.scale.y + this.rotorForces.rl.line.scale.y + this.rotorForces.rr.line.scale.y;
+                this.obj.translateY( thrustF / 100 );
+//                console.log( this.obj.position, this.obj.rotation );
+            }
+
+            var GfY = .03;
+
+
+			var camera, scene, renderer;
+			var obj, drone;
+
+			init();
+			animate();
+
+
+			function init() {
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.z = 3;
+				camera.position.y = 2;
+				scene = new THREE.Scene();
+
+                drone = new Drone();
+				scene.add( drone.obj );
+
+                var axisHelper = new THREE.AxisHelper( 2 ); // X = Red, Y = Green, Z = Blue
+                axisHelper.material.linewidth = 5;
+                scene.add( axisHelper );
+
+                scene.add( makeGround( 11, 11 ) );
+
+				renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById("canvas"),
+                    antialias: true
+                });
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				document.body.appendChild( renderer.domElement );
+				window.addEventListener( 'resize', onWindowResize, false );
+				window.addEventListener( 'keydown', onWindowKeyDown, false );
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+            function onWindowKeyDown( event ) {
+                console.log( event );
+                if ( event.which === 32 ) {
+                    scene.remove( drone.obj );
+                    drone = new Drone();
+                    scene.add( drone.obj );
+                }
+            }
+
+			function animate() {
+                drone.refresh();
+                drone.accR.Y += GfY;
+                drone.obj.position.y -= GfY; //drone.accR.Y;
+                drone.obj.matrixWorldNeedsUpdate = true;
+
+                if ( drone.obj.position.y < 0 || Math.abs(drone.obj.position.x) > 11 || Math.abs(drone.obj.position.z) > 11 ) {
+                    scene.remove( drone.obj );
+                    drone = new Drone();
+                    scene.add( drone.obj );
+                }
+
+				var a = Date.now() / 1000;
+				camera.position.x = Math.cos(a) * 3;
+				camera.position.z = Math.sin(a) * 3;
+                camera.lookAt( drone.obj.position );
+
+				renderer.render( scene, camera );
+				requestAnimationFrame( animate );
+			}
+
+
+            function makeGround( size, segments ) {
+            	var geometry     = new THREE.PlaneGeometry( size, size, segments, segments )
+            	var materialEven = new THREE.MeshBasicMaterial( { color: 0xccccfc } )
+            	var materialOdd  = new THREE.MeshBasicMaterial( { color: 0x444464 } )
+            	var materials    = [ materialEven, materialOdd ];
+
+            	for(var x = 0; x < segments; x++)
+            	for(var y = 0; y < segments; y++) {
+            		var i = x * segments + y, j = 2 * i;
+            		  geometry.faces[ j ].materialIndex = geometry.faces[ j + 1 ].materialIndex = ( x + y ) % 2;
+            	}
+
+            	var mesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
+            	mesh.position.set( 0, 0, 0 );
+            	mesh.rotation.set( -Math.PI/2, 0, 0 );
+            	mesh.updateProjectionMatrix = true;
+
+            	return mesh;
+            }
+        </script>
+    </body>
+</html>
