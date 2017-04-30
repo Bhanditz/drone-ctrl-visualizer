@@ -49,7 +49,7 @@ Pos : <span id="info-drone-pos"></span>
                 this.obj.add(new THREE.LineSegments( new THREE.EdgesGeometry( this.geometry )
             	       , new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 1 }) ));
 
-                this.accR = { X: 0, Z: 0, Y: 0 }
+                this.accR = { odd: 0, even: 0 }
 
                 this.forceGroup = new THREE.Group();
                 this.rotorForces = {
@@ -57,37 +57,38 @@ Pos : <span id="info-drone-pos"></span>
                     fr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0, 0.5), 1, 0x0000ff ), // front right
                     rl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0.5, 0,-0.5), 1, 0x8888ff ), // rear left
                     rr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0,-0.5), 1, 0xff8888 )  // rear right
-
-//                    fl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(-0.5, 0,   0), 1, 0xff8888 ), // front left
-//                    fr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(   0, 0, 0.5), 1, 0x8888ff ), // front right
-//                    rl : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3(   0, 0,-0.5), 1, 0x0000ff ), // rear left
-//                    rr : new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0.5, 0,   0), 1, 0xff0000 )  // rear right
                 }
                 this.obj.add(
                     this.forceGroup.add(
                         this.rotorForces.fl, this.rotorForces.fr, this.rotorForces.rl, this.rotorForces.rr ) );
+
             }
             Drone.prototype.refresh = function() {
-                this.rotorForces.fl.setLength( this.rotorForces.fl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
-                this.rotorForces.fr.setLength( this.rotorForces.fr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
-                this.rotorForces.rl.setLength( this.rotorForces.rl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
-                this.rotorForces.rr.setLength( this.rotorForces.rr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                var oddAxel  = new THREE.Vector3( 1, 0, -1 ).normalize();
+                var evenAxel = new THREE.Vector3( 1, 0,  1 ).normalize();
+                return function(){
+                    this.rotorForces.fl.setLength( this.rotorForces.fl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                    this.rotorForces.fr.setLength( this.rotorForces.fr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                    this.rotorForces.rl.setLength( this.rotorForces.rl.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
+                    this.rotorForces.rr.setLength( this.rotorForces.rr.line.scale.y + ((Math.random() - .5) / 1000) + 0.1, 0.1 );
 
-                var X_flrr = this.rotorForces.rr.line.scale.y - this.rotorForces.fl.line.scale.y;
-                var Z_frrl = this.rotorForces.rl.line.scale.y - this.rotorForces.fr.line.scale.y;
+                    var odd_flrr  = this.rotorForces.rr.line.scale.y - this.rotorForces.fl.line.scale.y;
+                    var even_frrl = this.rotorForces.rl.line.scale.y - this.rotorForces.fr.line.scale.y;
 
-                this.accR.X += Z_frrl / 100;
-                this.accR.Z += X_flrr / 100;
+                    this.accR.odd  += odd_flrr / 100;
+                    this.accR.even += even_frrl / 100;
 
-                this.obj.rotateX( this.accR.X );
-                this.obj.rotateZ( this.accR.Z );
+                    this.obj.rotateOnAxis( oddAxel, this.accR.odd );
+                    this.obj.rotateOnAxis( evenAxel, this.accR.even );
 
-                var thrustF = this.rotorForces.fl.line.scale.y + this.rotorForces.fr.line.scale.y + this.rotorForces.rl.line.scale.y + this.rotorForces.rr.line.scale.y;
-                this.obj.translateY( thrustF / 100 );
-//                console.log( this.obj.position, this.obj.rotation );
-            }
+                    var thrustF = this.rotorForces.fl.line.scale.y + this.rotorForces.fr.line.scale.y + this.rotorForces.rl.line.scale.y + this.rotorForces.rr.line.scale.y;
+                    this.obj.translateY( thrustF / 100 );
+                    document.getElementById("info-drone-pos").innerHTML = "(x:"+this.obj.position.x+",y:"+this.obj.position.y+",z:"+this.obj.position.z+")";
+//                    console.log( this.obj.position, this.obj.rotation );
+                }
+            }();
 
-            var GfY = .03;
+            var GfY = 0.03;
 
 
 			var camera, scene, renderer;
@@ -99,8 +100,8 @@ Pos : <span id="info-drone-pos"></span>
 
 			function init() {
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.z = 3;
-				camera.position.y = 2;
+				camera.position.z = 10;
+				camera.position.y = 4;
 				scene = new THREE.Scene();
 
                 drone = new Drone();
@@ -151,9 +152,9 @@ Pos : <span id="info-drone-pos"></span>
                     scene.add( drone.obj );
                 }
 
-				var a = Date.now() / 1000;
-				camera.position.x = Math.cos(a) * 3;
-				camera.position.z = Math.sin(a) * 3;
+				var a = Date.now() / 10000;
+				camera.position.x = Math.cos(a) * 7;
+				camera.position.z = Math.sin(a) * 7;
                 camera.lookAt( drone.obj.position );
 
 				renderer.render( scene, camera );
@@ -179,6 +180,15 @@ Pos : <span id="info-drone-pos"></span>
             	mesh.updateProjectionMatrix = true;
 
             	return mesh;
+            }
+
+            function makeSkybox( src ) {
+            	var geometry = new THREE.SphereGeometry( 500, 16, 8 );
+            	geometry.scale( - 1, 1, 1 );
+            	var material = new THREE.MeshBasicMaterial( {
+            		map: new THREE.TextureLoader().load( src )
+            	} );
+            	return new THREE.Mesh( geometry, material );
             }
         </script>
     </body>
